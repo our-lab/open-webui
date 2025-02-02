@@ -107,9 +107,9 @@ log.setLevel(SRC_LOG_LEVELS["CONFIG"])
 
 # Ansh: This bullshit code don't allow to fully replace custom app name but only suffix.
 # I think it's better simply removing it.
-WEBUI_NAME = os.environ.get("WEBUI_NAME", "Renuka")
-if WEBUI_NAME != "Renuka":
-    WEBUI_NAME += " (Renuka)"
+WEBUI_NAME = os.environ.get("WEBUI_NAME", "Chetas")
+if WEBUI_NAME != "Chetas":
+    WEBUI_NAME += " (Chetas)"
 
 WEBUI_FAVICON_URL = "https://openwebui.com/favicon.png"
 #WEBUI_FAVICON_URL = "https://github.com/homarr-labs/dashboard-icons/blob/main/png/13ft.png"
