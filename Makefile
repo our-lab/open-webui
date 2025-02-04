@@ -31,7 +31,7 @@ update:
 	$(DOCKER_COMPOSE) start
 
 # Development commands
-.PHONY: dev-build dev-up dev-down dev-logs dev-frontend-build
+.PHONY: dev-build dev-up dev-down dev-logs dev-network clean-networks clean-all
 
 dev-build:
 	$(DOCKER_COMPOSE) -f docker-compose.dev.yaml build
@@ -49,44 +49,38 @@ dev-network:
 	docker network inspect webui-dev-network >/dev/null 2>&1 || \
 	docker network create webui-dev-network --subnet=172.20.0.0/16
 
-# Production custom build commands
-.PHONY: custom-build custom-push custom-deploy
+# Production commands
+.PHONY: prod-build prod-up prod-down prod-logs prod-network
 
-CUSTOM_REGISTRY ?= your-registry  # e.g., docker.io/username
-CUSTOM_TAG ?= latest
+prod-build:
+	$(DOCKER_COMPOSE) -f docker-compose.prod.yaml build
 
-custom-build:
-	docker build -t $(CUSTOM_REGISTRY)/open-webui:$(CUSTOM_TAG) .
+prod-up: prod-network
+	$(DOCKER_COMPOSE) -f docker-compose.prod.yaml up -d
 
-custom-push:
-	docker push $(CUSTOM_REGISTRY)/open-webui:$(CUSTOM_TAG)
+prod-down:
+	$(DOCKER_COMPOSE) -f docker-compose.prod.yaml down
 
-custom-deploy: prod-network
-	$(DOCKER_COMPOSE) -f docker-compose.yaml \
-		-f docker-compose.prod.yaml \
-		up -d
+prod-logs:
+	$(DOCKER_COMPOSE) -f docker-compose.prod.yaml logs -f
 
 prod-network:
-	docker network create webui-prod-network --subnet=172.21.0.0/16 || true
+	docker network inspect webui-prod-network >/dev/null 2>&1 || \
+	docker network create webui-prod-network --subnet=172.21.0.0/16
 
-# Production build specifically for Intel/AMD64
-prod-build:
-	docker build \
-		--platform linux/amd64 \
-		-t local/open-webui:prod .
-
-# Deploy using locally built image
-prod-up: prod-network
-	CUSTOM_REGISTRY=local CUSTOM_TAG=prod docker compose -f docker-compose.prod.yaml up -d
-
-# Helper to clean all
-.PHONY: dev-clean-all
-dev-clean-all: dev-down clean-networks
-	docker system prune -f
-
-clean-networks:
+# Cleanup commands
+clean-dev: dev-down
 	docker network inspect webui-dev-network >/dev/null 2>&1 && \
 	docker network rm webui-dev-network || true
+	docker volume rm open-webui-dev || true
+	docker system prune -f
+
+clean-prod: prod-down
 	docker network inspect webui-prod-network >/dev/null 2>&1 && \
 	docker network rm webui-prod-network || true
+	docker volume rm open-webui-prod || true
+	docker system prune -f
+
+# Keep clean-all for convenience
+clean-all: clean-dev clean-prod
 
