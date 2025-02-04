@@ -1,0 +1,45 @@
+services:
+  open-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USE_CUDA: false
+        USE_OLLAMA: false
+        BUILD_HASH: prod
+        UID: 1000
+        GID: 1000
+        OLLAMA_BASE_URL: '/ollama'
+    image: ${CUSTOM_REGISTRY:-local}/open-webui:${CUSTOM_TAG:-prod}
+    container_name: open-webui-prod
+    volumes:
+      - open-webui-prod:/app/backend/data
+    ports:
+      - "127.0.0.1:${OPEN_WEBUI_PORT-3000}:8080"
+    environment:
+      - 'OLLAMA_BASE_URL=http://192.168.0.163:11434'
+      - 'NODE_ENV=production'
+    networks:
+      webui-prod-network:
+        ipv4_address: 172.21.0.2
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    security_opt:
+      - no-new-privileges:true
+    read_only: true  # Make container filesystem read-only
+    tmpfs:
+      - /tmp  # Temporary storage for runtime
+    restart: unless-stopped
+
+networks:
+  webui-prod-network:
+    external: true
+    name: webui-prod-network
+
+volumes:
+  open-webui-prod:
+    name: open-webui-prod 
